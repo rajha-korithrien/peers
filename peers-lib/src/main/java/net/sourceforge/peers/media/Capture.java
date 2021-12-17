@@ -53,6 +53,8 @@ public class Capture implements Runnable {
             buffer = soundSource.readData();
             try {
                 if (buffer == null) {
+                    this.setStopped(true);
+                    rawData.close();
                     break;
                 }
                 rawData.write(buffer);
@@ -62,6 +64,7 @@ public class Capture implements Runnable {
                 return;
             }
         }
+        logger.info("Shutdown: " + this.getClass().getSimpleName());
         latch.countDown();
         if (latch.getCount() != 0) {
             try {

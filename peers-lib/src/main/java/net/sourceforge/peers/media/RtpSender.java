@@ -96,12 +96,10 @@ public class RtpSender implements Runnable {
         int timestamp = 0;
         int numBytesRead;
         int tempBytesRead;
-        long sleepTime = 0;
-        long offset = 0;
-        long lastSentTime = System.nanoTime();
-        // indicate if its the first time that we send a packet (dont wait)
-        boolean firstTime = true;
-        
+
+        long packetTime = 0;
+        int millisecondsInThisPacket = 20; //each full packet is 20 milliseconds of data
+
         while (!isStopped) {
             numBytesRead = 0;
             try {
@@ -109,6 +107,14 @@ public class RtpSender implements Runnable {
                     // expect that the buffer is full
                     tempBytesRead = encodedData.read(buffer, numBytesRead,
                             buf_size - numBytesRead);
+                    if(tempBytesRead < 0){
+                        setStopped(true);
+                        int framesPerMillisecond = (int) 8000 / 1000; //frame rate of 8000 frames per second over 1000 milliseconds in a second.
+                        int framesPerByte = 1; //we have 8bits per sample and 1 channel, so 1 sample per frame, so 1 byte per frame
+                        int framesInThisPacket = numBytesRead * framesPerByte;
+                        millisecondsInThisPacket = framesInThisPacket / framesPerMillisecond;
+                        break;
+                    }
                     numBytesRead += tempBytesRead;
                 }
             } catch (IOException e) {
@@ -150,28 +156,19 @@ public class RtpSender implements Runnable {
                     timestamp += buf_size;
                 }
             rtpPacket.setTimestamp(timestamp);
-            if (firstTime) {
-                rtpSession.send(rtpPacket);
-                lastSentTime = System.nanoTime();
-                firstTime = false;
-                continue;
+
+            rtpSession.send(rtpPacket);
+            if(packetTime == 0){
+                packetTime = System.currentTimeMillis();
+            }else{
+                packetTime += millisecondsInThisPacket;
             }
-            sleepTime = 19500000 - (System.nanoTime() - lastSentTime) + offset;
-            if (sleepTime > 0) {
+            if(packetTime > (System.currentTimeMillis() + 100)){
                 try {
-                    Thread.sleep(Math.round(sleepTime / 1000000f));
+                    Thread.sleep(millisecondsInThisPacket);
                 } catch (InterruptedException e) {
                     logger.error("Thread interrupted", e);
-                    return;
-                }
-                rtpSession.send(rtpPacket);
-                lastSentTime = System.nanoTime();
-                offset = 0;
-            } else {
-                rtpSession.send(rtpPacket);
-                lastSentTime = System.nanoTime();
-                if (sleepTime < -20000000) {
-                    offset = sleepTime + 20000000;
+                    break;
                 }
             }
         }
@@ -183,6 +180,7 @@ public class RtpSender implements Runnable {
                 return;
             }
         }
+        logger.info("Shutdown: " + this.getClass().getSimpleName());
         latch.countDown();
         if (latch.getCount() != 0) {
             try {

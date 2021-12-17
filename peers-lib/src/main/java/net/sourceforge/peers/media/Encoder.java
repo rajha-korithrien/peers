@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
@@ -74,23 +75,20 @@ public abstract class Encoder implements Runnable {
                 return;
             }
         }
-        int ready;
+        byte[] rawDataBuffer = new byte[Capture.BUFFER_SIZE];
         while (!isStopped) {
             try {
-                ready = rawData.available();
-                while (ready == 0 && !isStopped) {
-                    try {
-                        Thread.sleep(2);
-                        ready = rawData.available();
-                    } catch (InterruptedException e) {
-                        logger.error("interrupt exception", e);
-                    }
-                }
-                if (isStopped) {
+                int readCount = rawData.read(rawDataBuffer);
+                if(readCount < 0){
+                    setStopped(true);
+                    encodedData.close();
                     break;
                 }
-                buffer = new byte[ready];
-                rawData.read(buffer);
+                if(readCount < rawDataBuffer.length){
+                    buffer = Arrays.copyOf(rawDataBuffer, readCount);
+                }else{
+                    buffer = rawDataBuffer;
+                }
                 if (mediaDebug) {
                     try {
                         encoderInput.write(buffer);
@@ -100,7 +98,7 @@ public abstract class Encoder implements Runnable {
                 }
             } catch (IOException e) {
                 logger.error("input/output error", e);
-                return;
+                break;
             }
             
             byte[] ulawData = process(buffer);
@@ -129,6 +127,7 @@ public abstract class Encoder implements Runnable {
                 return;
             }
         }
+        logger.info("Shutdown: " + this.getClass().getSimpleName());
         latch.countDown();
         if (latch.getCount() != 0) {
             try {

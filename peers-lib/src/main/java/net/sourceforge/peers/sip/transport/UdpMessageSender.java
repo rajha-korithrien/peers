@@ -72,8 +72,12 @@ public class UdpMessageSender extends MessageSender {
                 @Override
                 public Void run() {
                     try {
-                        logger.debug(datagramSocket.getLocalAddress().toString());
-                        datagramSocket.send(packet);
+                        if(datagramSocket != null) {
+                            logger.debug(datagramSocket.getLocalAddress().toString());
+                            datagramSocket.send(packet);
+                        }else{
+                            logger.info("Ignoring keepalive sendBytes request because SIP socket is not yet setup.");
+                        }
                     } catch (Throwable t) {
                         logger.error("throwable", new Exception(t));
                     }

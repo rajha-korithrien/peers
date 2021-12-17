@@ -180,8 +180,14 @@ public class MediaManager {
         switch (userAgent.getMediaMode()) {
         case captureAndPlayback:
 
-            AbstractSoundManager soundManager = userAgent.getSoundManager();
-            soundManager.init();
+            AbstractSoundManager soundManager;
+            try {
+                soundManager = userAgent.getSoundManager();
+                soundManager.init();
+            } catch(Throwable t){
+                logger.error("Unable to initialize sound manager: " + t.getMessage());
+                return;
+            }
 
             startRtpSession(destAddress, destPort, codec, soundManager);
 

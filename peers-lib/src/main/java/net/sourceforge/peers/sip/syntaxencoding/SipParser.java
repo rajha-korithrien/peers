@@ -163,7 +163,7 @@ public class SipParser {
         SipHeaderFieldValue contentLengthValue =
             sipMessage.getSipHeaders().get(new SipHeaderFieldName(
                     RFC3261.HDR_CONTENT_LENGTH));
-        if (contentLengthValue == null) {
+        if (contentLengthValue == null || "".equals(contentLengthValue.toString())) {
             return;
         }
         int length = Integer.parseInt(contentLengthValue.toString());

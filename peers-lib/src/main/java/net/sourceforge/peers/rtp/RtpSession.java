@@ -51,6 +51,7 @@ public class RtpSession {
     private DatagramSocket datagramSocket;
     private ExecutorService executorService;
     private List<RtpListener> rtpListeners;
+    private List<DTMFListener> dtmfListeners;
     private RtpParser rtpParser;
     private FileOutputStream rtpSessionOutput;
     private FileOutputStream rtpSessionInput;
@@ -65,6 +66,7 @@ public class RtpSession {
         this.peersHome = peersHome;
         this.datagramSocket = datagramSocket;
         rtpListeners = new ArrayList<RtpListener>();
+        dtmfListeners = new ArrayList<DTMFListener>();
         rtpParser = new RtpParser(logger);
         executorService = Executors.newSingleThreadExecutor();
     }
@@ -103,6 +105,10 @@ public class RtpSession {
 
     public void addRtpListener(RtpListener rtpListener) {
         rtpListeners.add(rtpListener);
+    }
+
+    public void addDtmfListener(DTMFListener dtmfListener) {
+        dtmfListeners.add(dtmfListener);
     }
 
     public synchronized void send(RtpPacket rtpPacket) {
@@ -245,6 +251,11 @@ public class RtpSession {
             RtpPacket rtpPacket = rtpParser.decode(trimmedData);
             for (RtpListener rtpListener: rtpListeners) {
                 rtpListener.receivedRtpPacket(rtpPacket);
+            }
+            if(rtpPacket.getPayloadType() == 101){
+                for(DTMFListener dtmfListener: dtmfListeners){
+                    dtmfListener.processDTMF(rtpPacket);
+                }
             }
             try {
                 executorService.execute(this);

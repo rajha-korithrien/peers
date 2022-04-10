@@ -26,6 +26,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import net.sourceforge.peers.Logger;
+import net.sourceforge.peers.rtp.DTMFListener;
 import net.sourceforge.peers.rtp.RtpPacket;
 import net.sourceforge.peers.rtp.RtpSession;
 import net.sourceforge.peers.sdp.Codec;
@@ -274,6 +275,18 @@ public class MediaManager {
             List<RtpPacket> rtpPackets = dtmfFactory.createDtmfPackets(digit);
             RtpSender rtpSender = captureRtpSender.getRtpSender();
             rtpSender.pushPackets(rtpPackets);
+        }
+    }
+
+    /**
+     * Can be used to add a {@link DTMFListener} after an {@link RtpSession} has been created.
+     * @param dtmfListener
+     */
+    public void addDtmfListener(DTMFListener dtmfListener){
+        if(rtpSession != null){
+            rtpSession.addDtmfListener(dtmfListener);
+        }else{
+            logger.error("Unable to add a dtmf listener because the rtp session has not been created.");
         }
     }
 

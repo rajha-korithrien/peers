@@ -49,7 +49,7 @@ public class SipURI {
         StringBuffer buf = new StringBuffer(sipUri);
         String scheme = RFC3261.SIP_SCHEME + RFC3261.SCHEME_SEPARATOR;
         if (!sipUri.startsWith(scheme)) {
-            throw new SipUriSyntaxException("SIP URI must start with " + scheme);
+            throw new SipUriSyntaxException("SIP URI must start with " + scheme + " but received: " + sipUri);
         }
         buf.delete(0, scheme.length());
         int atPos = buf.indexOf("@");

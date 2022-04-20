@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.sourceforge.peers.Logger;
 import net.sourceforge.peers.rtp.DTMFListener;
@@ -44,6 +46,7 @@ public class MediaManager {
     private Logger logger;
     private DatagramSocket datagramSocket;
     private FileReader fileReader;
+    private Set<DTMFListener> dtmfListeners = new HashSet<DTMFListener>();
 
     public MediaManager(UserAgent userAgent, Logger logger) {
         this.userAgent = userAgent;
@@ -63,7 +66,7 @@ public class MediaManager {
         }
         
         rtpSession = new RtpSession(inetAddress, datagramSocket,
-                userAgent.isMediaDebug(), logger, userAgent.getPeersHome());
+                userAgent.isMediaDebug(), logger, userAgent.getPeersHome(), this.dtmfListeners);
         
         try {
             inetAddress = InetAddress.getByName(remoteAddress);
@@ -151,7 +154,7 @@ public class MediaManager {
         Codec codec, SoundSource soundSource) {
         rtpSession = new RtpSession(userAgent.getConfig()
                 .getLocalInetAddress(), datagramSocket,
-                userAgent.isMediaDebug(), logger, userAgent.getPeersHome());
+                userAgent.isMediaDebug(), logger, userAgent.getPeersHome(), this.dtmfListeners);
 
         try {
             InetAddress inetAddress = InetAddress.getByName(destAddress);
@@ -283,10 +286,11 @@ public class MediaManager {
      * @param dtmfListener
      */
     public void addDtmfListener(DTMFListener dtmfListener){
+        this.dtmfListeners.add(dtmfListener);
         if(rtpSession != null){
             rtpSession.addDtmfListener(dtmfListener);
         }else{
-            logger.error("Unable to add a dtmf listener because the rtp session has not been created.");
+            logger.info("Delaying addition of dtmf listener until rtp session is created.");
         }
     }
 

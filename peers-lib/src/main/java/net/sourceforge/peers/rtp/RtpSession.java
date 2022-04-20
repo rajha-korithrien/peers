@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -60,7 +61,7 @@ public class RtpSession {
     private String peersHome;
 
     public RtpSession(InetAddress localAddress, DatagramSocket datagramSocket,
-            boolean mediaDebug, Logger logger, String peersHome) {
+            boolean mediaDebug, Logger logger, String peersHome, Set<DTMFListener> initialDtmfListeners) {
         this.mediaDebug = mediaDebug;
         this.logger = logger;
         this.peersHome = peersHome;
@@ -69,6 +70,7 @@ public class RtpSession {
         dtmfListeners = new ArrayList<DTMFListener>();
         rtpParser = new RtpParser(logger);
         executorService = Executors.newSingleThreadExecutor();
+        dtmfListeners.addAll(initialDtmfListeners);
     }
 
     public synchronized void start() {

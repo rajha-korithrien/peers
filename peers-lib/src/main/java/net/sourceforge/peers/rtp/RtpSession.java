@@ -32,6 +32,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +60,11 @@ public class RtpSession {
     private boolean mediaDebug;
     private Logger logger;
     private String peersHome;
+
+    public RtpSession(InetAddress localAddress, DatagramSocket datagramSocket,
+                      boolean mediaDebug, Logger logger, String peersHome) {
+        this(localAddress, datagramSocket, mediaDebug, logger, peersHome, Collections.<DTMFListener>emptySet());
+    }
 
     public RtpSession(InetAddress localAddress, DatagramSocket datagramSocket,
             boolean mediaDebug, Logger logger, String peersHome, Set<DTMFListener> initialDtmfListeners) {
